@@ -1,11 +1,13 @@
 #include <iostream>
 #include <cstring>
 #include <cmath>
+#include <stack>
+#include <ctime>
 #include "algorithm"
 
 //#define m 3
 #define Success 1
-#define Failure 0;
+#define Failure 0
 #define KeyType int
 #define Record int
 
@@ -15,7 +17,7 @@ using namespace std;
  */
 typedef struct BNode{
 
-    int keyNumber;              //关键字数量
+    int num;                    //关键字数量
     KeyType *key;               //关键字：所占空间为(max+1) - 多出来的1个空间用于交换空间使用
     BNode *parent;              //父节点
     BNode **child;              //子结点：所占空间为（max+2）- 多出来的1个空间用于交换空间使用
@@ -29,16 +31,10 @@ typedef struct Tree{
 
     int max;                     // 单个结点最大关键字个数 - 阶max = m - 1
     int min;                     // 单个结点最小关键字个数 - 阶min = [m/2] - 1
-    int sidx;                    // 分裂索引 sidx = (max+1)/2
+    int splitIndex;              // 分裂索引 splitIndex = m/2
     BTreeNode root;              // 根节点
 } *BTree;
 
-typedef struct Result{
-
-    BTreeNode resultPoint;
-    int index;
-    int tag;
-};
 /**
  * 创建b树
  * @param tree ：b树
@@ -62,20 +58,25 @@ int createBTree(BTree &tree, int m){
     tree->min = m/2-1;
     if(m%2 != 0)
         tree->min++;
+    tree->splitIndex = m/2;
     tree->root = nullptr;//空树
     return Success;
 }
 
 int createNode(BTree &bTree,BTreeNode &bTreeNode){
 
+    int size = bTree->max+2;
+
     bTreeNode = (BTreeNode)malloc(sizeof(BNode));
+
     if(bTreeNode == nullptr){
         fprintf(stderr, "[%s][%d] errmsg:[%d] %s\n", __FILE__, __LINE__, errno, strerror(errno));
         return Failure;
     }
-    bTreeNode->keyNumber=0;
 
-    bTreeNode->key = (KeyType *)malloc((bTree->max+2)*sizeof(KeyType));
+    bTreeNode->num=0;
+
+    bTreeNode->key = (KeyType *)malloc(size*sizeof(KeyType));
 
     if(bTreeNode->key == nullptr){
         free(bTreeNode);
@@ -84,7 +85,7 @@ int createNode(BTree &bTree,BTreeNode &bTreeNode){
         return Failure;
     }
 
-    bTreeNode->child = (BTreeNodeChild)malloc((bTree->max+2)*sizeof(BTreeNodeChild));
+    bTreeNode->child = (BTreeNodeChild)malloc(size*sizeof(BTreeNodeChild));
 
     if(bTreeNode->child == nullptr){
         free(bTreeNode->key);
@@ -94,43 +95,224 @@ int createNode(BTree &bTree,BTreeNode &bTreeNode){
         fprintf(stderr, "[%s][%d] errmsg:[%d] %s\n", __FILE__, __LINE__, errno, strerror(errno));
         return Failure;
     }
+    for (int i = 0; i < size; ++i) {
+        bTreeNode->child[i]= nullptr;
+    }
+    bTreeNode->parent= nullptr;
     return Success;
 }
 
-int Compare(BTreeNode &root,KeyType k){
-    int i = 1;
-    while ( i <=root->keyNumber && k > root->key[i]){
-        i++;
+int binaryCompare(BTreeNode &root, KeyType k){
+
+    int left = 0,right = root->num;
+    while (right-left>1){
+        int mid = (left+right)/2;
+
+        if(k == root->key[mid]){
+            fprintf(stderr, "[%s][%d] The node is exist!\n", __FILE__, __LINE__);
+            return -1;
+        }
+        if(root->key[mid]<k)
+            left = mid;
+        else
+            right = mid;
     }
-    return i;
+    return right;
 }
 
-Result SearchNode(BTreeNode &root,KeyType k){
+void SearchNode(BTreeNode &root,KeyType k,int &index){
 
-    int index = 0,found = 0;
-    BTreeNode nowNode = root, parent = nullptr;
+    while (root!= nullptr){
+        index = binaryCompare(root,k);
+        if(index==-1 || root->child[index]== nullptr)
+            break;
+        root = root->child[index];
+    }
+}
 
-    while (nowNode!= nullptr && found == 0){
+int splitNode(BTree &bTree,BTreeNode &node){
 
+    int splitIndex = bTree->splitIndex;
+    int index = 0 , total = 0;
+    BTreeNode parent = nullptr;
+    BTreeNode increaseNode = nullptr;
+
+    while (node->num>bTree->max){
+        total = node->num;
+
+        createNode(bTree,increaseNode);
+
+        if(increaseNode== nullptr){
+            fprintf(stderr, "[%s][%d] Create increaseNode failed!\n", __FILE__, __LINE__);
+            return Failure;
+        }
+        memcpy(increaseNode->key,node->key+splitIndex+1,(total-splitIndex-1)* sizeof(KeyType));
+        memcpy(increaseNode->child,node->child+splitIndex+1,(total-splitIndex)* sizeof(BTreeNodeChild));
+
+        node->num = splitIndex;
+
+        parent = node->parent;
+
+        /**
+         * 此时parent为根节点
+         */
+        if(parent== nullptr){
+
+            createNode(bTree,parent);
+
+            if(parent== nullptr){
+                fprintf(stderr, "[%s][%d] Create parentNode failed!\n", __FILE__, __LINE__);
+                return Failure;
+            }
+
+            bTree->root = parent;
+            node->parent = parent;
+            increaseNode->parent = parent;
+
+            parent->child[0] = node;
+            parent->child[1] = increaseNode;
+
+            parent->key[0] = node->key[splitIndex];
+            parent->num++;
+        }else{
+            index = binaryCompare(parent,node->key[splitIndex]);
+            memcpy(node->key+index+1,node->key+index, (parent->num-index)*sizeof(KeyType));
+            memcpy(node->child+index+1,node->key+index, (parent->num-index+1)*sizeof(BTreeNodeChild));
+            parent->key[index]=node->key[splitIndex];
+            parent->child[index+1] = increaseNode;
+            increaseNode->parent = parent;
+            increaseNode->num++;
+        }
+
+        memset(node->key+splitIndex, 0, (total - splitIndex) * sizeof(KeyType));
+        memset(node->child+splitIndex+1, 0, (total - splitIndex) * sizeof(BTreeNodeChild));
+
+        for(index=0; index<=increaseNode->num; index++) {
+            if(nullptr != increaseNode->child[index]) {
+                increaseNode->child[index]->parent = increaseNode;
+            }
+        }
+        node = parent;
+    }
+}
+
+int BTreeInsertByOrder(BTree &bTree,BTreeNode &node,KeyType key, int index){
+
+    for(int i=node->num; i>index; i--) {
+        node->key[i] = node->key[i-1];
+    }
+    node->key[index] = key;
+    node->num++;
+
+    if(node->num>bTree->max){
+        return splitNode(bTree,node);
+    }
+
+    return Success;
+}
+
+int BTreeInsert(BTree &bTree,KeyType key){
+
+    int index = 0;
+    if(bTree== nullptr){
+        fprintf(stderr,"[%s][%d] Parameter 'btree' can not be null\n", __FILE__, __LINE__);
+        return Failure;
+    }
+    BTreeNode node = bTree->root;
+    /**
+     * 空树，构建根节点
+     */
+    if(node== nullptr){
+        int flag = createNode(bTree,node);
+
+        if(flag==Failure){
+            fprintf(stderr, "[%s][%d] Create node failed!\n", __FILE__, __LINE__);
+            return Failure;
+        }
+        node->num=1;
+        //0开始还是1开始
+        node->key[0] = key;
+        node->parent = nullptr;
+        bTree->root  = node;
+        return Success;
+    }
+
+    SearchNode(node,key,index);
+    if(index==-1)
+        return Failure;
+    return BTreeInsertByOrder(bTree,node,key,index);
+}
+
+void printBTree(BTree bTree){
+    stack<BTreeNode > BTreeStack;
+    if(bTree->root!= nullptr)
+        BTreeStack.push(bTree->root);
+    while (!BTreeStack.empty()){
+        BTreeNode node = BTreeStack.top();
+        BTreeStack.pop();
+        printf("[");
+        for (int i = 0; i <node->num; ++i) {
+            printf("%d ",node->key[i]);
+        }
+        printf("]\n");
+        for (int j = 0; j <= node->num; ++j) {
+            if(node->child[j]!= nullptr){
+                BTreeStack.push(node->child[j]);
+            }
+        }
     }
 }
 
 int main() {
 
     BTree  bTree;
-    int flag=createBTree(bTree,3);
-    Result result = SearchNode(bTree->root,1);
+    int m = 4;
+    int flag=createBTree(bTree,m);
+
+//    int searchIndex;
+//    SearchNode(bTree->root,1);
     cout<<flag<<endl;
-    printf("max = %d,min = %d,sidx = %d \n",bTree->max,bTree->min,bTree->sidx);
-    BTreeNode bTreeNode;
-    int flag1=createNode(bTree,bTreeNode);
-    printf("flag1=%d , number=%d\n",flag1,bTreeNode->keyNumber);
-
-    bTreeNode->key[1] = 1;
-    bTreeNode->key[2] = 3;
-
-    bTreeNode->keyNumber = 2;
-    int res = Compare(bTreeNode,6);
-    printf("index = %d",res);
-
+    printf("max = %d,min = %d,sidx = %d \n",bTree->max,bTree->min,bTree->splitIndex);
+    srand((unsigned)time(nullptr));
+    for (int i = 0; i < 10; ++i) {
+        BTreeInsert(bTree,rand()%100);
+    }
+    printBTree(bTree);
+//    BTreeNode bTreeNode;
+//    int flag1=createNode(bTree,bTreeNode);
+//    printf("flag1=%d , number=%d\n",flag1,bTreeNode->num);
+//
+//    int r = 1;
+//    for (int j = 0; j < m - 1; ++j,r+=2) {
+//        bTreeNode->key[j] = r;
+//        printf("%d%c",r,j==m-2?'\n':' ');
+//    }
+//    bTreeNode->key[0] = 1;
+//    bTreeNode->key[1] = 3;
+//    bTreeNode->key[2] = 5;
+//    bTreeNode->key[3] = 7;
+//    bTreeNode->key[4] = 9;
+//    bTreeNode->key[5] = 11;
+//    bTreeNode->key[6] = 13;
+//    bTreeNode->key[7] = 15;
+//    bTreeNode->key[8] = 17;
+//
+//    bTreeNode->num = m-1;
+//    int needToFind = 4;
+//    int res = binaryCompare(bTreeNode, needToFind);
+//    printf("%d insert index = %d\n",needToFind,res);
+//
+//    for (int i = 0; i < bTree->max + 2; ++i) {
+//        printf("%d%c", bTreeNode->child[i],i==bTree->max+1?'\n':' ');
+//    }
+//    cout<<endl;
+//    memcpy(bTreeNode->key+res+1,bTreeNode->key+res, (bTreeNode->num-res)*sizeof(KeyType));
+//    memcpy(bTreeNode->child+res+1,bTreeNode->child+res, (bTreeNode->num-res+1)*sizeof(BTreeNodeChild));
+//    for (int i = 0; i < bTree->max + 2; ++i) {
+//        printf("%d%c", bTreeNode->child[i],i==bTree->max+1?'\n':' ');
+//    }
+//    bTreeNode->key[res]=needToFind;
+//    for (int k = 0; k < m; ++k) {
+//        printf("%d%c",bTreeNode->key[k],k==m-1?'\n':' ');
+//    }
 }
