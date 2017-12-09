@@ -14,33 +14,33 @@
 
 using namespace std;
 /**
- * Bæ ‘èŠ‚ç‚¹
+ * BÊ÷½Úµã
  */
 typedef struct BNode{
 
-    int num;                    //å…³é”®å­—æ•°é‡
-    KeyType *key;               //å…³é”®å­—ï¼šæ‰€å ç©ºé—´ä¸º(max+1) - å¤šå‡ºæ¥çš„1ä¸ªç©ºé—´ç”¨äºŽäº¤æ¢ç©ºé—´ä½¿ç”¨
-    BNode *parent;              //çˆ¶èŠ‚ç‚¹
-    BNode **child;              //å­ç»“ç‚¹ï¼šæ‰€å ç©ºé—´ä¸ºï¼ˆmax+2ï¼‰- å¤šå‡ºæ¥çš„1ä¸ªç©ºé—´ç”¨äºŽäº¤æ¢ç©ºé—´ä½¿ç”¨
+    int num;                    //¹Ø¼ü×ÖÊýÁ¿
+    KeyType *key;               //¹Ø¼ü×Ö£ºËùÕ¼¿Õ¼äÎª(max+1) - ¶à³öÀ´µÄ1¸ö¿Õ¼äÓÃÓÚ½»»»¿Õ¼äÊ¹ÓÃ
+    BNode *parent;              //¸¸½Úµã
+    BNode **child;              //×Ó½áµã£ºËùÕ¼¿Õ¼äÎª£¨max+2£©- ¶à³öÀ´µÄ1¸ö¿Õ¼äÓÃÓÚ½»»»¿Õ¼äÊ¹ÓÃ
     Record *record;
 
 }*BTreeNode,**BTreeNodeChild;
 /**
- * Bæ ‘
+ * BÊ÷
  */
 typedef struct Tree{
 
-    int max;                     // å•ä¸ªç»“ç‚¹æœ€å¤§å…³é”®å­—ä¸ªæ•° - é˜¶max = m - 1
-    int min;                     // å•ä¸ªç»“ç‚¹æœ€å°å…³é”®å­—ä¸ªæ•° - é˜¶min = [m/2] - 1
-    int splitIndex;              // åˆ†è£‚ç´¢å¼• splitIndex = m/2
-    BTreeNode root;              // æ ¹èŠ‚ç‚¹
+    int max;                     // µ¥¸ö½áµã×î´ó¹Ø¼ü×Ö¸öÊý - ½×max = m - 1
+    int min;                     // µ¥¸ö½áµã×îÐ¡¹Ø¼ü×Ö¸öÊý - ½×min = [m/2] - 1
+    int splitIndex;              // ·ÖÁÑË÷Òý splitIndex = m/2
+    BTreeNode root;              // ¸ù½Úµã
 } *BTree;
 
 /**
- * åˆ›å»ºbæ ‘
- * @param tree ï¼šbæ ‘
- * @param m :é˜¶æ•°
- * @return statusï¼šçŠ¶æ€
+ * ´´½¨bÊ÷
+ * @param tree £ºbÊ÷
+ * @param m :½×Êý
+ * @return status£º×´Ì¬
  */
 int createBTree(BTree &tree, int m){
 
@@ -60,7 +60,7 @@ int createBTree(BTree &tree, int m){
     if(m%2 != 0)
         tree->min++;
     tree->splitIndex = m/2;
-    tree->root = nullptr;//ç©ºæ ‘
+    tree->root = nullptr;//¿ÕÊ÷
     return Success;
 }
 
@@ -160,7 +160,7 @@ int splitNode(BTree &bTree,BTreeNode &node){
         parent = node->parent;
 
         /**
-         * æ­¤æ—¶parentä¸ºæ ¹èŠ‚ç‚¹
+         * ´ËÊ±parentÎª¸ù½Úµã
          */
         if(parent== nullptr){
 
@@ -226,7 +226,7 @@ int BTreeInsert(BTree &bTree,KeyType key){
     }
     BTreeNode node = bTree->root;
     /**
-     * ç©ºæ ‘ï¼Œæž„å»ºæ ¹èŠ‚ç‚¹
+     * ¿ÕÊ÷£¬¹¹½¨¸ù½Úµã
      */
     if(node== nullptr){
         int flag = createNode(bTree,node);
@@ -236,7 +236,7 @@ int BTreeInsert(BTree &bTree,KeyType key){
             return Failure;
         }
         node->num=1;
-        //0å¼€å§‹è¿˜æ˜¯1å¼€å§‹
+        //0¿ªÊ¼»¹ÊÇ1¿ªÊ¼
         node->key[0] = key;
         node->parent = nullptr;
         bTree->root  = node;
@@ -249,16 +249,20 @@ int BTreeInsert(BTree &bTree,KeyType key){
     return BTreeInsertByOrder(bTree,node,key,index);
 }
 
-void printBTree(BTreeNode node){
+void printBTree(BTreeNode node,int depth){
 
     if(node == nullptr)
         return;
     for (int j = 0; j <=node->num ; ++j) {
-        printBTree(node->child[j]);
+        printBTree(node->child[j],depth+1);
+    }
+    for (int k = 0; k < depth; ++k) {
+        printf("%s","--");
     }
     for (int i = 0; i < node->num; ++i) {
-        printf("%c%d%c%c",i==0?'[':'',node->key[i],i==node->num-1?']':' ',i==node->num-1?'\n':'');
+        printf("%c%d%c",i==0?'[':'\0',node->key[i],i==node->num-1?']':',');
     }
+    printf("\n");
 }
 
 int main() {
@@ -280,7 +284,7 @@ int main() {
         BTreeInsert(bTree,a[i]);
     }
     cout<<endl;
-    printBTree(bTree);
+    printBTree(bTree->root,1);
 //    BTreeNode bTreeNode;
 //    int flag1=createNode(bTree,bTreeNode);
 //    printf("flag1=%d , number=%d\n",flag1,bTreeNode->num);
