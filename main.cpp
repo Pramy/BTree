@@ -3,6 +3,7 @@
 #include <cmath>
 #include <stack>
 #include <ctime>
+#include <queue>
 #include "algorithm"
 
 //#define m 3
@@ -84,6 +85,7 @@ int createNode(BTree &bTree,BTreeNode &bTreeNode){
         fprintf(stderr, "[%s][%d] errmsg:[%d] %s\n", __FILE__, __LINE__, errno, strerror(errno));
         return Failure;
     }
+    memset(bTreeNode->key,0,(size)* sizeof(KeyType));
 
     bTreeNode->child = (BTreeNodeChild)malloc(size*sizeof(BTreeNodeChild));
 
@@ -95,29 +97,30 @@ int createNode(BTree &bTree,BTreeNode &bTreeNode){
         fprintf(stderr, "[%s][%d] errmsg:[%d] %s\n", __FILE__, __LINE__, errno, strerror(errno));
         return Failure;
     }
-    for (int i = 0; i < size; ++i) {
-        bTreeNode->child[i]= nullptr;
-    }
+    memset(bTreeNode->child, 0,(size)* sizeof(BTreeNodeChild));
+//    for (int i = 0; i < size; ++i) {
+//        bTreeNode->child[i]= nullptr;
+//    }
     bTreeNode->parent= nullptr;
     return Success;
 }
 
 int binaryCompare(BTreeNode &root, KeyType k){
 
-    int left = 0,right = root->num;
-    while (right-left>1){
+    int left = 0,right = root->num-1;
+    while (right>=left){
         int mid = (left+right)/2;
 
         if(k == root->key[mid]){
-            fprintf(stderr, "[%s][%d] The node is exist!\n", __FILE__, __LINE__);
+            printf("key:%d already exits !\n",root->key[mid]);
             return -1;
         }
         if(root->key[mid]<k)
-            left = mid;
+            left = mid+1;
         else
-            right = mid;
+            right = mid-1;
     }
-    return right;
+    return left;
 }
 
 void SearchNode(BTreeNode &root,KeyType k,int &index){
@@ -149,6 +152,9 @@ int splitNode(BTree &bTree,BTreeNode &node){
         memcpy(increaseNode->key,node->key+splitIndex+1,(total-splitIndex-1)* sizeof(KeyType));
         memcpy(increaseNode->child,node->child+splitIndex+1,(total-splitIndex)* sizeof(BTreeNodeChild));
 
+        increaseNode->num = total-splitIndex-1;
+        increaseNode->parent = node->parent;
+
         node->num = splitIndex;
 
         parent = node->parent;
@@ -176,12 +182,12 @@ int splitNode(BTree &bTree,BTreeNode &node){
             parent->num++;
         }else{
             index = binaryCompare(parent,node->key[splitIndex]);
-            memcpy(node->key+index+1,node->key+index, (parent->num-index)*sizeof(KeyType));
-            memcpy(node->child+index+1,node->key+index, (parent->num-index+1)*sizeof(BTreeNodeChild));
+            memcpy(parent->key+index+1,parent->key+index, (parent->num-index)*sizeof(KeyType));
+            memcpy(parent->child+index+1,parent->child+index, (parent->num-index+1)*sizeof(BTreeNodeChild));
             parent->key[index]=node->key[splitIndex];
             parent->child[index+1] = increaseNode;
             increaseNode->parent = parent;
-            increaseNode->num++;
+            parent->num++;
         }
 
         memset(node->key+splitIndex, 0, (total - splitIndex) * sizeof(KeyType));
@@ -243,48 +249,52 @@ int BTreeInsert(BTree &bTree,KeyType key){
     return BTreeInsertByOrder(bTree,node,key,index);
 }
 
-void printBTree(BTree bTree){
-    stack<BTreeNode > BTreeStack;
-    if(bTree->root!= nullptr)
-        BTreeStack.push(bTree->root);
-    while (!BTreeStack.empty()){
-        BTreeNode node = BTreeStack.top();
-        BTreeStack.pop();
-        printf("[");
-        for (int i = 0; i <node->num; ++i) {
-            printf("%d ",node->key[i]);
-        }
-        printf("]\n");
-        for (int j = 0; j <= node->num; ++j) {
-            if(node->child[j]!= nullptr){
-                BTreeStack.push(node->child[j]);
-            }
-        }
+void printBTree(BTreeNode node){
+
+    if(node == nullptr)
+        return;
+    for (int j = 0; j <=node->num ; ++j) {
+        printBTree(node->child[j]);
+    }
+    for (int i = 0; i < node->num; ++i) {
+        printf("%c%d%c%c",i==0?'[':'',node->key[i],i==node->num-1?']':' ',i==node->num-1?'\n':'');
     }
 }
 
 int main() {
 
     BTree  bTree;
-    int m = 4;
+    int m = 3;
     int flag=createBTree(bTree,m);
 
 //    int searchIndex;
 //    SearchNode(bTree->root,1);
-    cout<<flag<<endl;
-    printf("max = %d,min = %d,sidx = %d \n",bTree->max,bTree->min,bTree->splitIndex);
+//    cout<<flag<<endl;
+//    printf("max = %d,min = %d,sidx = %d \n",bTree->max,bTree->min,bTree->splitIndex);
     srand((unsigned)time(nullptr));
+    int a[]={39,98,26,23,25,41,26,24,97,20};
     for (int i = 0; i < 10; ++i) {
-        BTreeInsert(bTree,rand()%100);
+//        int a = rand()%100;
+//        printf("%d%c",a,(i==10)?'\n':',');
+        cout<<"insert:"<<a[i]<<" ";
+        BTreeInsert(bTree,a[i]);
     }
+    cout<<endl;
     printBTree(bTree);
 //    BTreeNode bTreeNode;
 //    int flag1=createNode(bTree,bTreeNode);
 //    printf("flag1=%d , number=%d\n",flag1,bTreeNode->num);
-//
+
+//    memset(bTreeNode->key,0,(m+1)* sizeof(KeyType));
 //    int r = 1;
-//    for (int j = 0; j < m - 1; ++j,r+=2) {
-//        bTreeNode->key[j] = r;
+//    for (int j = 0; j < m-1; ++j,r+=2) {
+//        int a = rand()%100;
+//        int index = binaryCompare(bTreeNode,a);
+//        if(index!=-1) {
+//            memcpy(bTreeNode->key+index+1,bTreeNode->key+index, (bTreeNode->num-index)*sizeof(KeyType));
+//            bTreeNode->key[index] = a;
+//            bTreeNode->num++;
+//        }
 //        printf("%d%c",r,j==m-2?'\n':' ');
 //    }
 //    bTreeNode->key[0] = 1;
