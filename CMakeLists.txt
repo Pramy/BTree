@@ -3,4 +3,4 @@ project(demo)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(demo main.cpp main.cpp)
+add_executable(demo main.cpp main.cpp delete.h constant.h constant.cpp delete.cpp insert.h insert.cpp structure.h structure.cpp)
