@@ -11,7 +11,8 @@
 #define Failure 0
 #define KeyType int
 #define Record int
-
+#define MIN_INT 0x80000001
+#define MAX_INT 0x7FFFFFFF
 using namespace std;
 /**
  * B树节点
@@ -36,6 +37,11 @@ typedef struct Tree{
     BTreeNode root;              // 根节点
 } *BTree;
 
+typedef struct Result{
+
+    int tag = Failure;
+    int index = MIN_INT;
+};
 /**
  * 创建b树
  * @param tree ：b树
@@ -105,32 +111,38 @@ int createNode(BTree &bTree,BTreeNode &bTreeNode){
     return Success;
 }
 
-int binaryCompare(BTreeNode &root, KeyType k){
+Result binaryCompare(BTreeNode &root, KeyType k){
 
+    Result result;
     int left = 0,right = root->num-1;
     while (right>=left){
         int mid = (left+right)/2;
 
         if(k == root->key[mid]){
             printf("key:%d already exits !\n",root->key[mid]);
-            return -1;
+            result.tag = Success;
+            result.index = mid;
+            return result;
         }
         if(root->key[mid]<k)
             left = mid+1;
         else
             right = mid-1;
     }
-    return left;
+    result.index=left;
+    return result;
 }
 
-void SearchNode(BTreeNode &root,KeyType k,int &index){
+Result SearchNode(BTreeNode &root,KeyType k){
 
+    Result result;
     while (root!= nullptr){
-        index = binaryCompare(root,k);
-        if(index==-1 || root->child[index]== nullptr)
+        result = binaryCompare(root,k);
+        if(result.tag==Success || result.index==MIN_INT || root->child[result.index]== nullptr)
             break;
-        root = root->child[index];
+        root = root->child[result.index];
     }
+    return result;
 }
 
 int splitNode(BTree &bTree,BTreeNode &node){
@@ -257,8 +269,9 @@ void printBTree(BTreeNode node,int depth){
         printBTree(node->child[j],depth+1);
     }
     for (int k = 0; k < depth; ++k) {
-        printf("%s","--");
+        printf("%s"," ");
     }
+    printf("第%d层:|--",depth);
     for (int i = 0; i < node->num; ++i) {
         printf("%c%d%c",i==0?'[':'\0',node->key[i],i==node->num-1?']':',');
     }
@@ -276,8 +289,13 @@ int main() {
 //    cout<<flag<<endl;
 //    printf("max = %d,min = %d,sidx = %d \n",bTree->max,bTree->min,bTree->splitIndex);
     srand((unsigned)time(nullptr));
-    int a[]={39,98,26,23,25,41,26,24,97,20};
-    for (int i = 0; i < 10; ++i) {
+//    int a[]={39,98,26,23,25,41,26,24,97,20};
+    int a[1000];
+    int sum = 20;
+    for(int i= 0;i<sum;i++){
+        a[i]=rand()%1000;
+    }
+    for (int i = 0; i < sum; ++i) {
 //        int a = rand()%100;
 //        printf("%d%c",a,(i==10)?'\n':',');
         cout<<"insert:"<<a[i]<<" ";
@@ -285,6 +303,7 @@ int main() {
     }
     cout<<endl;
     printBTree(bTree->root,1);
+    printf("MIN_INT:%d,MAX_INT:%d,result:%d\n",MIN_INT,MAX_INT,MIN_INT+MAX_INT);
 //    BTreeNode bTreeNode;
 //    int flag1=createNode(bTree,bTreeNode);
 //    printf("flag1=%d , number=%d\n",flag1,bTreeNode->num);
