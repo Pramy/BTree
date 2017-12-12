@@ -1,39 +1,38 @@
 //
 // Created by Pramy on 2017/12/12.
 //
-
+//#pragma once
 #ifndef DEMO_STRUCTURE_H
 #define DEMO_STRUCTURE_H
 
-#endif //DEMO_STRUCTURE_H
 
 #include "constant.h"
 
 /**
- * Bæ ‘èŠ‚ç‚¹
+ * BÊ÷½Úµã
  */
 
 typedef struct BNode{
 
-    int num;                    //å…³é”®å­—æ•°é‡
-    KeyType *key;               //å…³é”®å­—ï¼šæ‰€å ç©ºé—´ä¸º(max+1) - å¤šå‡ºæ¥çš„1ä¸ªç©ºé—´ç”¨äºäº¤æ¢ç©ºé—´ä½¿ç”¨
-    BNode *parent;              //çˆ¶èŠ‚ç‚¹
-    BNode **child;              //å­ç»“ç‚¹ï¼šæ‰€å ç©ºé—´ä¸ºï¼ˆmax+2ï¼‰- å¤šå‡ºæ¥çš„1ä¸ªç©ºé—´ç”¨äºäº¤æ¢ç©ºé—´ä½¿ç”¨
+    int num;                    //¹Ø¼ü×ÖÊıÁ¿
+    KeyType *key;               //¹Ø¼ü×Ö£ºËùÕ¼¿Õ¼äÎª(max+1) - ¶à³öÀ´µÄ1¸ö¿Õ¼äÓÃÓÚ½»»»¿Õ¼äÊ¹ÓÃ
+    BNode *parent;              //¸¸½Úµã
+    BNode **child;              //×Ó½áµã£ºËùÕ¼¿Õ¼äÎª£¨max+2£©- ¶à³öÀ´µÄ1¸ö¿Õ¼äÓÃÓÚ½»»»¿Õ¼äÊ¹ÓÃ
     Record *record;
 
 }*BTreeNode,**BTreeNodeChild;
 /**
- * Bæ ‘
+ * BÊ÷
  */
 typedef struct Tree{
 
-    int max;                     // å•ä¸ªç»“ç‚¹æœ€å¤§å…³é”®å­—ä¸ªæ•° - é˜¶max = m - 1
-    int min;                     // å•ä¸ªç»“ç‚¹æœ€å°å…³é”®å­—ä¸ªæ•° - é˜¶min = [m/2] - 1
-    int splitIndex;              // åˆ†è£‚ç´¢å¼• splitIndex = m/2
-    BTreeNode root;              // æ ¹èŠ‚ç‚¹
+    int max;                     // µ¥¸ö½áµã×î´ó¹Ø¼ü×Ö¸öÊı - ½×max = m - 1
+    int min;                     // µ¥¸ö½áµã×îĞ¡¹Ø¼ü×Ö¸öÊı - ½×min = [m/2] - 1
+    int splitIndex;              // ·ÖÁÑË÷Òı splitIndex = m/2
+    BTreeNode root;              // ¸ù½Úµã
 } *BTree;
 /**
- * ç»“æœé›†
+ * ½á¹û¼¯
  */
 typedef struct ResultNode{
 
@@ -56,3 +55,6 @@ int createResult(Result &result);
 
 void destroyResult(Result &result);
 
+void beforePrintBTree(BTreeNode node,int depth,int num);
+
+#endif //DEMO_STRUCTURE_H

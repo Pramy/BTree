@@ -8,10 +8,10 @@
 #include "structure.h"
 
 /**
- * åˆ›å»ºbæ ‘
- * @param tree ï¼šbæ ‘
- * @param m :é˜¶æ•°
- * @return statusï¼šçŠ¶æ€
+ * ´´½¨bÊ÷
+ * @param tree £ºbÊ÷
+ * @param m :½×Êý
+ * @return status£º×´Ì¬
  */
 int createBTree(BTree &tree, int m){
 
@@ -31,7 +31,7 @@ int createBTree(BTree &tree, int m){
     if(m%2 != 0)
         tree->min++;
     tree->splitIndex = m/2;
-    tree->root = nullptr;//ç©ºæ ‘
+    tree->root = nullptr;//¿ÕÊ÷
     return Success;
 }
 
@@ -132,4 +132,21 @@ void destroyResult(Result &result){
 
     free(result);
     result = nullptr;
+}
+
+void beforePrintBTree(BTreeNode node,int depth,int num){
+
+    if(node == nullptr)
+        return;
+    for (int k = 0; k < depth; ++k) {
+        printf("%s",k==0?"":"      ");
+    }
+    printf("µÚ%d²ã---µÚ%d¸ö½Úµã:",depth,num);
+    for (int i = 0; i < node->num; ++i) {
+        printf("%c%d%c",i==0?'[':'\0',node->key[i],i==node->num-1?']':',');
+    }
+    printf("\n");
+    for (int j = 0; j <=node->num ; ++j) {
+        beforePrintBTree(node->child[j],depth+1,j);
+    }
 }

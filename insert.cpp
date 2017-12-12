@@ -7,37 +7,7 @@
 #include <cstring>
 #include "insert.h"
 
-void binarySearch(BTreeNode &root, KeyType k, Result &result){
 
-    int left = 0,right = root->num-1;
-    while (right>=left){
-        int mid = (left+right)/2;
-
-        if(k == root->key[mid]){
-            result->tag = Success;
-            result->index = mid;
-            return ;
-        }
-        if(root->key[mid]<k)
-            left = mid+1;
-        else
-            right = mid-1;
-    }
-    result->index=left;
-}
-
-void SearchNode(BTreeNode &root,KeyType k,Result &result){
-
-    while (root!= nullptr){
-        binarySearch(root, k, result);
-        result->node = root;
-        if(result->tag==Success || result->index==MIN_INT || root->child[result->index]== nullptr) {
-            break;
-        }
-        root = root->child[result->index];
-    }
-
-}
 
 int splitNode(BTree &bTree, BTreeNode &node){
 
@@ -114,7 +84,7 @@ int splitNode(BTree &bTree, BTreeNode &node){
     destroyResult(result);
 }
 
-int BTreeInsertByOrder(BTree &bTree,BTreeNode &node,KeyType key, int index){
+int btreeInsertByOrder(BTree &bTree, BTreeNode &node, KeyType key, int index){
 
     for(int i=node->num; i>index; i--) {
         node->key[i] = node->key[i-1];
@@ -129,7 +99,7 @@ int BTreeInsertByOrder(BTree &bTree,BTreeNode &node,KeyType key, int index){
     return Success;
 }
 
-int BTreeInsert(BTree &bTree,KeyType key){
+int btreeInsert(BTree &bTree, KeyType key){
 
     int index = 0;
     if(bTree== nullptr){
@@ -157,7 +127,7 @@ int BTreeInsert(BTree &bTree,KeyType key){
     Result result = {};
     createResult(result);
 
-    SearchNode(node,key,result);
+    node=SearchNode(node,key,result);
     if(result->tag==Success) {
         printf("key:[%d] already exits !\n",key);
         destroyResult(result);
@@ -165,7 +135,7 @@ int BTreeInsert(BTree &bTree,KeyType key){
     }
     index = result->index;
     destroyResult(result);
-    return BTreeInsertByOrder(bTree,node,key,index);
+    return btreeInsertByOrder(bTree, node, key, index);
 }
 
 
