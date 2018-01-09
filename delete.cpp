@@ -21,8 +21,10 @@ int btreeDelete(BTree &bTree,KeyType key){
     createResult(result);
 
     BTreeNode node = SearchNode(bTree->root,key,result);
-    if(result->tag!=Success)
+    if(result->tag!=Success) {
+        printf("[%s][%d] Did not find node: %d!\n", __FILE__, __LINE__,key);
         return Failure;
+    }
     return btreeDeleteByOrder(bTree,result->node,result->index);
 
 }
