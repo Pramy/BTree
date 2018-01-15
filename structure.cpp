@@ -35,13 +35,24 @@ int createBTree(BTree &tree, int m){
     return Success;
 }
 
+void destroyTree_Node(BTreeNode node){
+    if(node== nullptr)
+        return ;
+    for (int i = 0; i <= node->num; ++i) {
+        destroyTree_Node(node->child[i]);
+    }
+    destroyNode(node);
+}
+
 void destroyTree(BTree &bTree){
     if(bTree== nullptr)
         return;
-    bTree->root = nullptr;
+    destroyTree_Node(bTree->root);
     free(bTree);
     bTree= nullptr;
 }
+
+
 
 int createNodeByOrder(BTree &bTree, BTreeNode &bTreeNode, int recordSize){
 
@@ -92,8 +103,9 @@ void destroyNode(BTreeNode &bTreeNode){
 
     if(bTreeNode== nullptr)
         return;
-
     for (int i = 0; i <= bTreeNode->num; ++i) {
+        if(i!=bTreeNode->num)
+            printf("Ïú»Ù£º%d,",bTreeNode->key[i]);
         bTreeNode->child[i] = nullptr;
     }
     free(bTreeNode->child);

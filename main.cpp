@@ -48,6 +48,7 @@ int main() {
         btreeDelete(bTree,del[j]);
         beforePrintBTree(bTree->root,1,0);
     }
+    destroyTree(bTree);
 //    BTreeNode bTreeNode;
 //    int flag1=createNode(bTree,bTreeNode);
 //    printf("flag1=%d , number=%d\n",flag1,bTreeNode->num);
